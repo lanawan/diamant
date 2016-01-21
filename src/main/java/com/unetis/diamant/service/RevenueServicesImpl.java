@@ -7,14 +7,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.unetis.diamant.dao.RevenueDao;
 import com.unetis.diamant.model.Revenue;
 
+/**
+ * Класс обслуживания контроллера RevenueController
+ * 
+ * Методы-сервисы, вызываемые напрямую из контроллера RevenueController
+ * 
+ * @author Stepan
+ *
+ */
 public class RevenueServicesImpl implements RevenueServices {
 
 	@Autowired
 	RevenueDao revenueDao;
+	
+	/**
+	 * Добавть выручку в базу см. RevenueDaoImpl 
+	 */
 	@Override
-	public boolean addEntity(List<Revenue> revenue) throws Exception {
-		return revenueDao.addEntity(revenue);
+	public void addEntity(List<Revenue> revenue) {
+		revenueDao.addEntity(revenue);
 	}
+/*
 	@Override
 	public Revenue getEntityById(int id) throws Exception {
 		return revenueDao.getEntityById(id);
@@ -27,5 +40,5 @@ public class RevenueServicesImpl implements RevenueServices {
 	public boolean deleteEntity(int id) throws Exception {
 		return revenueDao.deleteEntity(id);
 	}
-
+*/
 }

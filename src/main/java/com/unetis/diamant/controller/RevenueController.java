@@ -3,8 +3,11 @@ package com.unetis.diamant.controller;
 import java.util.List;
 
 import com.unetis.diamant.model.Revenue;
+import com.unetis.diamant.model.Traffic;
 import com.unetis.diamant.service.RevenueServices;
+import com.unetis.emeraude.AesCrypt;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,6 +17,17 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 
+ * Класс контроллер всего, что касается выручки.
+ * Клиент шлет выручку.
+ * 
+ * Получаем сразу несколько выручек (за каждый отдельный день и кассу)
+ * Пишем полученное в базу  
+ * 
+ * @author Stepan
+ *
+ */
 @RestController
 @RequestMapping("/revenue")
 public class RevenueController {
@@ -21,17 +35,32 @@ public class RevenueController {
 	@Autowired
 	RevenueServices revenueServices;
 
-	@RequestMapping(value = "/create", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+	/**
+	 * Метод общения с клиентской программой orblanc
+	 * Метод получает выручку и записывает ее в базу.
+	 * 
+	 * @param encodedData - зашифрованная строка, после расшифровки нужно преобразовать в список объектов выручки
+	 * @return Ок или Error с текстом ошибки
+	 */
+	@RequestMapping(value = "/create{objId}", method = RequestMethod.POST, consumes = MediaType.TEXT_PLAIN_VALUE)
 	public @ResponseBody
-	String addRevenue(@RequestBody List<Revenue> revenue) {
+	String addRevenue(@PathVariable("objId") String objId, @RequestBody String encodedData) {
 		try {
+			AesCrypt crypt = new AesCrypt(objId);
+			ObjectMapper mapper = new ObjectMapper();
+			// Расшифровываем и преобразуем полученное в список объектов выручки
+			List<Revenue> revenue = mapper.readValue(crypt.decrypt(encodedData), mapper.getTypeFactory().constructCollectionType(List.class, Revenue.class));
+			// Добавляем список в базу
 			revenueServices.addEntity(revenue);
+			// Отвечаем клиенту Ок - добавили
 			return "Ok";
 		} catch (Exception e) {
 			return "Error:"+e.toString();
 		}
-
 	}
+/*
+	Будущие действия для админки
+
 
 	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
 	public @ResponseBody
@@ -71,6 +100,6 @@ public class RevenueController {
 		} catch (Exception e) {
 			return "Error:"+e.toString();
 		}
-
 	}
+*/
 }

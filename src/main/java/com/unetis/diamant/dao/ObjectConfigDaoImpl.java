@@ -13,6 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.unetis.diamant.model.ObjectConfig;
 
+/**
+ * 
+ * Класс обслуживания сервиса ObjectConfigServices
+ * 
+ * Методы, вызываемые не напрямую из контроллера ObjectConfig, а посредством сервиса-посредника ObjectConfigServices
+ * 
+ * @author Stepan
+ *
+ */
 public class ObjectConfigDaoImpl implements ObjectConfigDao {
 
 	@Autowired
@@ -20,38 +29,35 @@ public class ObjectConfigDaoImpl implements ObjectConfigDao {
 
 	Session session = null;
 	Transaction tx = null;
-	@Override
-	public boolean addEntity(ObjectConfig objectConfig) throws Exception {
 
-		session = sessionFactory.openSession();
-		tx = session.beginTransaction();
-		session.saveOrUpdate(objectConfig);
-		tx.commit();
-		session.close();
-
-		return false;
-	}
-	@Override
-	public ObjectConfig getEntityById(int id) throws Exception {
-		session = sessionFactory.openSession();
-		ObjectConfig objectConfig = session.load(ObjectConfig.class, id);
-		tx = session.getTransaction();
-		session.beginTransaction();
-		tx.commit();
-		session.close();
-		return objectConfig;
-	}
+	/**
+	 * 
+	 * Получение конфигурации клиента из базы
+	 * 
+	 * @param objId - идентификатор клиента
+	 * @return ObjectConfig - конфигурация клиента в виде объекта
+	 * 
+	 */
 	@Override
 	public ObjectConfig getEntityByObjId(String objId) throws Exception {
+		// Получение идентификатора сессии хибера
 		session = sessionFactory.openSession();
 
-		Query query = session.createQuery("FROM ObjectConfig a where a.objId = "+objId); 
+		// Редактирование хиберского запроса конфигурации для идентификатора objId
+		Query query = session.createQuery("FROM ObjectConfig a where a.objId = "+objId);
+		// Ответ может быть только один, так как идентификатор уникален
 		ObjectConfig record = (ObjectConfig)query.uniqueResult();
 
+		// Рутина выполнения транзакции запроса
 		tx = session.getTransaction();
 		session.beginTransaction();
+		// Вот здесь хибер обращается в базу и запрашивает через свой JDBC драйвер то, что отредактировано в Query
 		tx.commit();
+
+		// Сессию хибера закрыли
 		session.close();
+		
+		// Если есть ответ из базы, то возвращаем его
 		if(record!=null){
 			return record;
 		}
@@ -60,20 +66,34 @@ public class ObjectConfigDaoImpl implements ObjectConfigDao {
 		}
 	}
 
+	/**
+	 * 
+	 * Получение драйвера из папки с драйверами
+	 * 
+	 * @param objId - идентификатор клиента
+	 * @return байт-код считанного в папке драйвера
+	 * 
+	 */
 	@Override
 	public byte[] getJDBCDriver(String objId) throws Exception {
+		// Получение идентификатора сессии хибера
 		session = sessionFactory.openSession();
 
-		Query query = session.createQuery("FROM ObjectConfig a where a.objId = "+objId); 
+		// Редактирование хиберского запроса информации о драйвере для идентификатора objId
+		Query query = session.createQuery("FROM ObjectConfig a where a.objId = "+objId);
+		// Ответ может быть только один, так как идентификатор уникален
 		ObjectConfig record = (ObjectConfig)query.uniqueResult();
 		
+		// Рутина выполнения транзакции запроса
 		tx = session.getTransaction();
 		session.beginTransaction();
 		tx.commit();
 		session.close();
 		
+		// Если есть ответ из базы, то есть нашли полный path драйвера для этого клиента
 		if(record!=null){
 			try{
+				// Тогда считываем этот драйвер
 				String filename = record.getDriver().getDriverPath()+record.getDriver().getDriverFilename();
 				File file = new File(filename);
 				int size = (int)file.length();
@@ -94,6 +114,7 @@ public class ObjectConfigDaoImpl implements ObjectConfigDao {
 					}
 					
 				}
+				// И возвращаем считанный байт-код
 				return bytes;
 			}
 			catch(Exception e){
@@ -103,6 +124,30 @@ public class ObjectConfigDaoImpl implements ObjectConfigDao {
 		else{
 			throw new Exception("Object "+objId+" doesn't exist in database");
 		}
+	}
+/*  
+	Пока что не используется. Будет использоваться, когда будет админка.
+
+	@Override
+	public boolean addEntity(ObjectConfig objectConfig) throws Exception {
+
+		session = sessionFactory.openSession();
+		tx = session.beginTransaction();
+		session.saveOrUpdate(objectConfig);
+		tx.commit();
+		session.close();
+
+		return false;
+	}
+	@Override
+	public ObjectConfig getEntityById(int id) throws Exception {
+		session = sessionFactory.openSession();
+		ObjectConfig objectConfig = session.load(ObjectConfig.class, id);
+		tx = session.getTransaction();
+		session.beginTransaction();
+		tx.commit();
+		session.close();
+		return objectConfig;
 	}
 
 	@Override
@@ -125,5 +170,7 @@ public class ObjectConfigDaoImpl implements ObjectConfigDao {
 		tx.commit();
 		return false;
 	}
+
+*/
 
 }
